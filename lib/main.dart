@@ -41,8 +41,9 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          ScaffoldMessenger.of(context)
-              .showSnackBar(const SnackBar(content: Text("Hello World!🎉")));
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content:
+                  Text("Hello World!🎉 \nWelcome from the feature_1 branch")));
         },
         tooltip: 'Increment',
         child: const Icon(Icons.add),
