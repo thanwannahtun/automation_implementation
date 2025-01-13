@@ -15,9 +15,12 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
+      # Step 2: Install jq
+      # jq is used to parse JSON when downloading the build artifact
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
 
+      # Step 3: Set Up Flutter
       - name: Set Up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -25,7 +28,7 @@ jobs:
           channel: 'stable'
           cache: true
 
-
+      # Step 4: Download build artifact from the latest release
       - name: Download Build Artifact from Release
         run: |
           curl -L -o android_builds.tar.gz \
@@ -33,103 +36,54 @@ jobs:
           | jq -r '.assets[] | select(.name == "android_builds.tar.gz").browser_download_url')"
 
 
-
+      # Step 5: Extract the downloaded artifact
       - name: Extract Artifact
         run: |
           mkdir deploy_output
           tar -xzf android_builds.tar.gz -C deploy_output
 
-#
-#      - name: Download Build Artifacts
-#        uses: actions/download-artifact@v4
-#        with:
-#          # ⚠️ need android_builds artifacts
-#          name: android_builds
-#          path: deploy_output
-
+      # Step 6: Debug artifact contents
       - name: Debug List Downloaded Artifacts
         run: |
           echo "Extracted assets:"
           ls -R deploy_output
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+      # Step 7: Install Firebase CLI
+      # Firebase CLI is required for deploying artifacts to Firebase App Distribution
+      - name: Install Firebase CLI
+        uses: w9jds/firebase-action@v2.0.0
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: deploy_output
+          args: --version
+#        env:
+#          FIREBASE_TOKEN: ${{ secrets.FIREBASE_AUTH_TOKEN }}
 
 
-      - name: Debug View Deployed Assets
+
+      # Step 8: Authenticate Firebase CLI using Service Account Key
+      # Uses the service account key stored in a GitHub secret
+      # https://firebase.google.com/docs/app-distribution/authenticate-service-account?platform=android
+      - name: Authenticate Firebase CLI
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
         run: |
-          echo "Deployed assets:"
-          ls -R deploy_output
-          
+          echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}" > firebase_key.json
+          export GOOGLE_APPLICATION_CREDENTIALS=firebase_key.json
+          firebase projects:list
 
-######
-#
-#name: Deployment
-#
-#on:
-#  pull_request:
-#    branches: [ "main" ]
-#
-#jobs:
-#  deploy:
-#    name: Deploy to GitHub Pages
-#    runs-on: ubuntu-latest
-#
-#    steps:
-#      - name: Checkout Code
-#        uses: actions/checkout@v3
-#
-#      - name: Set Up Java
-#        uses: actions/setup-java@v3.12.0
-#        with:
-#          distribution: 'oracle'
-#          java-version: "17"
-#          cache: 'gradle'
-#
-#      - name: Set Up Flutter
-#        uses: subosito/flutter-action@v2
-#        with:
-#          flutter-version: '3.24.3'
-#          channel: 'stable'
-#          cache: true
-#
-#      - name: Install Dependencies
-#        run: flutter pub get
-#
-#      - name: Run Tests
-#        run: flutter test # Optionally add specific tags if needed
-#
-#      - name: Build APK and AAB
-#        run: |
-#          flutter build apk --release
-#          flutter build appbundle
-#
-#      - name: Compress Android Archives
-#        run: |
-#          cd build
-#          tar -czf android_builds.tar.gz app/outputs/
-#
-#      - name: Move Build Outputs
-#        run: |
-#          mkdir -p deploy_output
-#          mv build/app/outputs/flutter-apk/app-release.apk deploy_output/
-#          mv build/app/outputs/bundle/release/app-release.aab deploy_output/
-#          mv build/android_builds.tar.gz deploy_output/
-#
-#      - name: Debug List Deployed Artifacts
-#        run: ls -R deploy_output
-#
-#      - name: Deploy to GitHub Pages
-#        uses: peaceiris/actions-gh-pages@v3
-#        with:
-#          github_token: ${{ secrets.GITHUB_TOKEN }}
-#          publish_dir: deploy_output
-#
-#      - name: Debug View Deployed Assets
-#        run: |
-#          echo "Deployed assets:"
-#          ls -R deploy_output
-####
+#      # Step 8: Authenticate Firebase CLI using personal tokens less secure compared to Service Account Key
+#      # Authenticates the CLI using a Firebase token stored as a GitHub secret
+#      - name: Authenticate Firebase CLI
+#        run: firebase login:ci --token ${{ secrets.FIREBASE_AUTH_TOKEN }}
+
+      # Step 9: Upload APK to Firebase App Distribution
+      # Deploys the APK to Firebase, using app ID and tester groups stored as secrets
+      # https://firebase.google.com/docs/app-distribution/android/distribute-cli
+      - name: Upload APK to Firebase App Distribution
+        run: |
+          firebase appdistribution:distribute deploy_output/app-release.apk \
+          --app ${{ secrets.FIREBASE_APP_ID }} \
+          --groups ${{ secrets.FIREBASE_TESTER_GROUPS }}
+
+      # Optional: Debug Firebase CLI output
+      - name: Debug Firebase Output
+        run: echo "Firebase Distribution Completed!"
