@@ -66,7 +66,7 @@ jobs:
           export GOOGLE_APPLICATION_CREDENTIALS=firebase_key.json
 
 
-        firebase login
+          firebase login
 
           firebase projects:list  # This is used for debugging the CLI authentication
       
