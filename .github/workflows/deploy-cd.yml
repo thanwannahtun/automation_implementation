@@ -59,19 +59,19 @@ jobs:
 #        env:
 #          FIREBASE_TOKEN: ${{ secrets.FIREBASE_AUTH_TOKEN }}
 
-
-
-      # Step 8: Authenticate Firebase CLI using Service Account Key
-      # Uses the service account key stored in a GitHub secret
-      # https://firebase.google.com/docs/app-distribution/authenticate-service-account?platform=android
       - name: Authenticate Firebase CLI
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
         run: |
           echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}" > firebase_key.json
           export GOOGLE_APPLICATION_CREDENTIALS=firebase_key.json
-          firebase projects:list
+          firebase projects:list  # This is used for debugging the CLI authentication
 
+
+
+
+
+
+
+   
 #      # Step 8: Authenticate Firebase CLI using personal tokens less secure compared to Service Account Key
 #      # Authenticates the CLI using a Firebase token stored as a GitHub secret
 #      - name: Authenticate Firebase CLI
