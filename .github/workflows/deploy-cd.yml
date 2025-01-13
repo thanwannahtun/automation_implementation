@@ -48,17 +48,13 @@ jobs:
           echo "Extracted assets:"
           ls -R deploy_output
 
-      # Step 7: Install Firebase CLI
-      # Firebase CLI is required for deploying artifacts to Firebase App Distribution
+      # Install Firebase CLI globally via npm to ensure it works in all steps
       - name: Install Firebase CLI
-        uses: w9jds/firebase-action@v2.0.0
-        with:
-          args: --version
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
-#        env:
-#          FIREBASE_TOKEN: ${{ secrets.FIREBASE_AUTH_TOKEN }}
+        run: |
+          curl -sL https://firebase.tools | bash
+          sudo mv firebase /usr/local/bin/
 
+      # Authenticate Firebase 
       - name: Authenticate Firebase CLI
         run: |
           echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}" > firebase_key.json
