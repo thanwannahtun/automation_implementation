@@ -54,6 +54,8 @@ jobs:
         uses: w9jds/firebase-action@v2.0.0
         with:
           args: --version
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
 #        env:
 #          FIREBASE_TOKEN: ${{ secrets.FIREBASE_AUTH_TOKEN }}
 
