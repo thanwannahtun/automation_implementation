@@ -1,0 +1,43 @@
+name: Feature CI
+
+on:
+#  pull_request:
+#    branches:
+#      - develop
+  push:
+    branches:
+      - feature/**
+
+jobs:
+  test:
+    name: Run Linting and Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set Up Java
+        uses: actions/setup-java@v3.12.0
+        with:
+          distribution: 'oracle'
+          java-version: "17"
+          cache: 'gradle'
+
+      # 3. Set Up Flutter
+      - name: Set Up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.3'
+          channel: 'stable'
+          cache: true
+
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Run Lint
+        run: flutter analyze
+
+      - name: Run Tests
+        run: flutter test

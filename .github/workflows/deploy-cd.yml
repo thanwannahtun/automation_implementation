@@ -1,0 +1,135 @@
+name: Deployment
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+
+
+jobs:
+  deploy:
+    name: Deploy to Github Pages
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Set Up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.3'
+          channel: 'stable'
+          cache: true
+
+
+      - name: Download Build Artifact from Release
+        run: |
+          curl -L -o android_builds.tar.gz \
+          "$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/latest \
+          | jq -r '.assets[] | select(.name == "android_builds.tar.gz").browser_download_url')"
+
+
+
+      - name: Extract Artifact
+        run: |
+          mkdir deploy_output
+          tar -xzf android_builds.tar.gz -C deploy_output
+
+#
+#      - name: Download Build Artifacts
+#        uses: actions/download-artifact@v4
+#        with:
+#          # ⚠️ need android_builds artifacts
+#          name: android_builds
+#          path: deploy_output
+
+      - name: Debug List Downloaded Artifacts
+        run: |
+          echo "Extracted assets:"
+          ls -R deploy_output
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: deploy_output
+
+
+      - name: Debug View Deployed Assets
+        run: |
+          echo "Deployed assets:"
+          ls -R deploy_output
+          
+
+######
+#
+#name: Deployment
+#
+#on:
+#  pull_request:
+#    branches: [ "main" ]
+#
+#jobs:
+#  deploy:
+#    name: Deploy to GitHub Pages
+#    runs-on: ubuntu-latest
+#
+#    steps:
+#      - name: Checkout Code
+#        uses: actions/checkout@v3
+#
+#      - name: Set Up Java
+#        uses: actions/setup-java@v3.12.0
+#        with:
+#          distribution: 'oracle'
+#          java-version: "17"
+#          cache: 'gradle'
+#
+#      - name: Set Up Flutter
+#        uses: subosito/flutter-action@v2
+#        with:
+#          flutter-version: '3.24.3'
+#          channel: 'stable'
+#          cache: true
+#
+#      - name: Install Dependencies
+#        run: flutter pub get
+#
+#      - name: Run Tests
+#        run: flutter test # Optionally add specific tags if needed
+#
+#      - name: Build APK and AAB
+#        run: |
+#          flutter build apk --release
+#          flutter build appbundle
+#
+#      - name: Compress Android Archives
+#        run: |
+#          cd build
+#          tar -czf android_builds.tar.gz app/outputs/
+#
+#      - name: Move Build Outputs
+#        run: |
+#          mkdir -p deploy_output
+#          mv build/app/outputs/flutter-apk/app-release.apk deploy_output/
+#          mv build/app/outputs/bundle/release/app-release.aab deploy_output/
+#          mv build/android_builds.tar.gz deploy_output/
+#
+#      - name: Debug List Deployed Artifacts
+#        run: ls -R deploy_output
+#
+#      - name: Deploy to GitHub Pages
+#        uses: peaceiris/actions-gh-pages@v3
+#        with:
+#          github_token: ${{ secrets.GITHUB_TOKEN }}
+#          publish_dir: deploy_output
+#
+#      - name: Debug View Deployed Assets
+#        run: |
+#          echo "Deployed assets:"
+#          ls -R deploy_output
+####
