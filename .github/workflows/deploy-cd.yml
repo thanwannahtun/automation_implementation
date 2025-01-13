@@ -1,0 +1,45 @@
+name: Deployment
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+
+
+jobs:
+  deploy:
+    name: Deploy to Github Pages
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set Up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.3'
+          channel: 'stable'
+          cache: true
+
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          # ⚠️ need android_builds artifacts
+          name: android_builds
+          path: deploy_output
+
+      - name: Debug List Downloaded Artifacts
+        run: ls -R deploy_output
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: deploy_output
+
+
+      - name: Debug View Deployed Assets
+        run: |
+          echo "Deployed assets:"
+          ls -R deploy_output
