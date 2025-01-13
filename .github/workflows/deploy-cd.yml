@@ -62,9 +62,13 @@ jobs:
       # Authenticate Firebase 
       - name: Authenticate Firebase CLI
         run: |
-          echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}" > firebase_key.json
+           echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}" > firebase_key.json
           export GOOGLE_APPLICATION_CREDENTIALS=firebase_key.json
+
+
           firebase projects:list  # This is used for debugging the CLI authentication
+        firebase login
+
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
 
