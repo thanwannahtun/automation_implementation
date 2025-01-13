@@ -48,11 +48,16 @@ jobs:
           echo "Extracted assets:"
           ls -R deploy_output
 
-      # Install Firebase CLI globally via npm to ensure it works in all steps
+
+      # Install Firebase CLI via npm globally
       - name: Install Firebase CLI
         run: |
-          curl -sL https://firebase.tools | bash
-          sudo mv firebase /usr/local/bin/
+          sudo apt-get install -y npm
+          sudo npm install -g firebase-tools
+
+
+
+
 
       # Authenticate Firebase 
       - name: Authenticate Firebase CLI
