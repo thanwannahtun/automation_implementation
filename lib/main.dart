@@ -40,8 +40,10 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Text("Flutter With CI/CD"),
       ),
       floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.black45,
         onPressed: () {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              backgroundColor: Colors.black45,
               content:
                   Text("Hello World!🎉 \nWelcome from the feature_1 branch")));
         },
