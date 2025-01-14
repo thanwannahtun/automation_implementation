@@ -1,14 +1,20 @@
-name: Deployment
+name: Deploy to Firebase
 
 on:
   pull_request:
     branches: [ "main" ]
-
+  workflow_dispatch:
+    inputs:
+      release_notes:
+        type: string
+        required: true
+        default: 'Manual Debug Build'
+        description: 'Release Notes'
 
 
 jobs:
   deploy:
-    name: Deploy to Github Pages
+    name: Building and distributing app
     runs-on: ubuntu-latest
 
     steps:
@@ -42,58 +48,29 @@ jobs:
           mkdir deploy_output
           tar -xzf android_builds.tar.gz -C deploy_output
 
-      # Step 6: Debug artifact contents
-      - name: Debug List Downloaded Artifacts
-        run: |
-          echo "Extracted assets:"
-          ls -R deploy_output
+      - name: Check APK File
+        run: ls deploy_output/app/outputs/flutter-apk/
 
-      # Step 7: Install Firebase CLI
-      # Firebase CLI is required for deploying artifacts to Firebase App Distribution
-      - name: Install Firebase CLI
-        uses: w9jds/firebase-action@v2.0.0
+      - name: Upload Artifact to Firebase App Distribution
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
         with:
-          args: --version
-          env:
-            GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+          appId: ${{ secrets.FIREBASE_APP_ID }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+          groups: ${{ secrets.FIREBASE_TESTER_GROUPS }}
+          file: deploy_output/app/outputs/flutter-apk/app-release.apk
+          #          file: app/build/outputs/apk/debug/app-debug.apk
+          releaseNotes: ${{ github.event.inputs.release_notes }}
+#          releaseNotes: ${{ inputs.release_notes }}
+
+
+      #      - name: Deploy to Firebase App Distribution
+      #        run: firebase appdistribution:distribute deploy_output/app/outputs/flutter-apk/app-release.apk \
+      #          --app ${{ secrets.FIREBASE_APP_ID }} \
+      #          --groups ${{ secrets.FIREBASE_TESTER_GROUPS }}
+      #          --release-notes "Bug fixes and improvements"
+      #          --debug
       #        env:
-      #          FIREBASE_TOKEN: ${{ secrets.FIREBASE_AUTH_TOKEN }}
-
-
-      - name: Authenticate Firebase CLI
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
-        run: |
-          echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}" > firebase_key.json
-          export GOOGLE_APPLICATION_CREDENTIALS=firebase_key.json
-          firebase projects:list  # Verify authentication
-
-
-#
-#      # Step 8: Authenticate Firebase CLI using Service Account Key
-#      # Uses the service account key stored in a GitHub secret
-#      # https://firebase.google.com/docs/app-distribution/authenticate-service-account?platform=android
-#      - name: Authenticate Firebase CLI
-#        env:
-#          GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
-#        run: |
-#          echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}" > firebase_key.json
-#          export GOOGLE_APPLICATION_CREDENTIALS=firebase_key.json
-##          firebase projects:list
-
-      #      # Step 8: Authenticate Firebase CLI using personal tokens less secure compared to Service Account Key
-      #      # Authenticates the CLI using a Firebase token stored as a GitHub secret
-      #      - name: Authenticate Firebase CLI
-      #        run: firebase login:ci --token ${{ secrets.FIREBASE_AUTH_TOKEN }}
-
-      # Step 9: Upload APK to Firebase App Distribution
-      # Deploys the APK to Firebase, using app ID and tester groups stored as secrets
-      # https://firebase.google.com/docs/app-distribution/android/distribute-cli
-      - name: Upload APK to Firebase App Distribution
-        run: |
-          firebase appdistribution:distribute deploy_output/app-release.apk \
-          --app ${{ secrets.FIREBASE_APP_ID }} \
-          --groups ${{ secrets.FIREBASE_TESTER_GROUPS }}
+      #          GOOGLE_APPLICATION_CREDENTIALS: $HOME/firebase-key.json
 
       # Optional: Debug Firebase CLI output
       - name: Debug Firebase Output
