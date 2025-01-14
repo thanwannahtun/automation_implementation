@@ -59,6 +59,12 @@ jobs:
           npm install -g firebase-tools
           firebase --version
 
+      - name: Verify Firebase Key
+        run: |
+          echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}" > $HOME/firebase-key.json
+          cat $HOME/firebase-key.json
+
+
       - name: Authenticate Firebase
         run: echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}" > $HOME/firebase-key.json
         env:
