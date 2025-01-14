@@ -1,14 +1,21 @@
-name: Deployment
+name: Deploy to Firebase
 
 on:
-  pull_request:
-    branches: [ "main" ]
-
+  #  pull_request:
+  #    branches: [ "main" ]
+  workflow_dispatch:
+    branches: [ "main" ] # remove this part if you want to select specific branch
+    inputs:
+      release_notes:
+        type: string
+        required: true
+        default: 'Manual Debug Build'
+        description: 'Release Notes'
 
 
 jobs:
   deploy:
-    name: Deploy to Github Pages
+    name: Building and distributing app
     runs-on: ubuntu-latest
 
     steps:
@@ -42,47 +49,31 @@ jobs:
           mkdir deploy_output
           tar -xzf android_builds.tar.gz -C deploy_output
 
-      # Step 6: Debug artifact contents
-      - name: Debug List Downloaded Artifacts
-        run: |
-          echo "Extracted assets:"
-          ls -R deploy_output
+      # Step 6: Check APK File exists
+      - name: Check APK File
+        run: ls deploy_output/app/outputs/flutter-apk/
 
-      # Step 7: Install Firebase CLI
-      # Firebase CLI is required for deploying artifacts to Firebase App Distribution
-      - name: Install Firebase CLI
-        uses: w9jds/firebase-action@v2.0.0
+      # Step 6: Determine Release Notes between pull_request and manually via workflow_dispatch
+      - name: Determine Release Notes
+        id: determine_release_notes
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "Using release notes from workflow_dispatch input."
+            echo "RELEASE_NOTES=${{ github.event.inputs.release_notes }}" >> $GITHUB_ENV
+          else
+            echo "Using default release notes for pull request."
+            echo "RELEASE_NOTES=Automatic Deployment triggered by Pull Request #${{ github.event.pull_request.number }}" >> $GITHUB_ENV
+          fi
+
+
+      - name: Upload Artifact to Firebase App Distribution
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
         with:
-          args: --version
-#        env:
-#          FIREBASE_TOKEN: ${{ secrets.FIREBASE_AUTH_TOKEN }}
-
-
-
-      # Step 8: Authenticate Firebase CLI using Service Account Key
-      # Uses the service account key stored in a GitHub secret
-      # https://firebase.google.com/docs/app-distribution/authenticate-service-account?platform=android
-      - name: Authenticate Firebase CLI
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
-        run: |
-          echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}" > firebase_key.json
-          export GOOGLE_APPLICATION_CREDENTIALS=firebase_key.json
-          firebase projects:list
-
-#      # Step 8: Authenticate Firebase CLI using personal tokens less secure compared to Service Account Key
-#      # Authenticates the CLI using a Firebase token stored as a GitHub secret
-#      - name: Authenticate Firebase CLI
-#        run: firebase login:ci --token ${{ secrets.FIREBASE_AUTH_TOKEN }}
-
-      # Step 9: Upload APK to Firebase App Distribution
-      # Deploys the APK to Firebase, using app ID and tester groups stored as secrets
-      # https://firebase.google.com/docs/app-distribution/android/distribute-cli
-      - name: Upload APK to Firebase App Distribution
-        run: |
-          firebase appdistribution:distribute deploy_output/app-release.apk \
-          --app ${{ secrets.FIREBASE_APP_ID }} \
-          --groups ${{ secrets.FIREBASE_TESTER_GROUPS }}
+          appId: ${{ secrets.FIREBASE_APP_ID }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+          groups: ${{ secrets.FIREBASE_TESTER_GROUPS }}
+          file: deploy_output/app/outputs/flutter-apk/app-release.apk
+          releaseNotes: ${{ env.RELEASE_NOTES }}
 
       # Optional: Debug Firebase CLI output
       - name: Debug Firebase Output
