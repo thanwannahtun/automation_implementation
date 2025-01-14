@@ -71,7 +71,9 @@ jobs:
           GOOGLE_APPLICATION_CREDENTIALS: $HOME/firebase-key.json
 
       - name: Verify Firebase Authentication
-        run: firebase projects:list
+        run: |
+          firebase login
+          firebase projects:list
         env:
           GOOGLE_APPLICATION_CREDENTIALS: $HOME/firebase-key.json
 
