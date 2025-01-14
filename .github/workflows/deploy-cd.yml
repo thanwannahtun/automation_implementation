@@ -56,7 +56,7 @@ jobs:
         with:
           appId: ${{ secrets.FIREBASE_APP_ID }}
           serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
-          groups: testers
+          groups: ${{ secrets.FIREBASE_TESTER_GROUPS }}
           file: deploy_output/app/outputs/flutter-apk/app-release.apk
           #          file: app/build/outputs/apk/debug/app-debug.apk
           releaseNotes: ${{ github.event.inputs.release_notes }}
