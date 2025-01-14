@@ -51,36 +51,24 @@ jobs:
       - name: Verify APK File
         run: ls -R deploy_output
 
-
-      - name: Test APK Path 1
-        run: |
-          echo "Checking APK file at: deploy_output/app/outputs/apk/release/app-release.apk"
-          ls deploy_output/app/outputs/apk/release/app-release.apk || echo "File not found!"
-
-      - name: Test APK Path 2
-        run: |
-          echo "Checking APK file at: deploy_output/app/outputs/flutter-apk/app-release.apk"
-          ls deploy_output/app/outputs/flutter-apk/app-release.apk || echo "File not found!"
-
-
-      - name: Debug Firebase Secrets
-        run: |
-          echo "FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}"
-          echo "FIREBASE_TESTER_GROUPS: ${{ secrets.FIREBASE_TESTER_GROUPS }}"
-          echo "Checking Service Account Key..."
-          echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}" | head -c 50
-
+      - name: Check APK File
+        run: ls deploy_output/app/outputs/flutter-apk/
 
       - name: Install Firebase CLI
         run: |
           npm install -g firebase-tools
           firebase --version
 
-      - name: Authenticate Firebase with Token
-        run: firebase login:ci --token "${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}"
-
       - name: Authenticate Firebase
         run: echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}" > $HOME/firebase-key.json
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: $HOME/firebase-key.json
+
+      - name: Verify Firebase Authentication
+        run: firebase projects:list
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: $HOME/firebase-key.json
+
 
       - name: Deploy to Firebase App Distribution
         run: firebase appdistribution:distribute deploy_output/app/outputs/flutter-apk/app-release.apk \
