@@ -60,7 +60,7 @@ jobs:
           groups: ${{ secrets.FIREBASE_TESTER_GROUPS }}
 #          file: deploy_output/app/outputs/apk/release/app-release.apk
 #          file: deploy_output/app/outputs/flutter-apk/app-release.apk
-          file: deploy_output/app/outputs/apk/release/app-release.apk
+          file: deploy_output/app/outputs/flutter-apk/app-release.apk
           releaseNotes: "Initial release"
           debug: true
 
