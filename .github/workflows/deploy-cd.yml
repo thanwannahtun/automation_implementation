@@ -52,14 +52,32 @@ jobs:
         run: ls -R deploy_output
 
 
+      - name: Test APK Path 1
+        run: |
+          echo "Checking APK file at: deploy_output/app/outputs/apk/release/app-release.apk"
+          ls deploy_output/app/outputs/apk/release/app-release.apk || echo "File not found!"
+
+      - name: Test APK Path 2
+        run: |
+          echo "Checking APK file at: deploy_output/app/outputs/flutter-apk/app-release.apk"
+          ls deploy_output/app/outputs/flutter-apk/app-release.apk || echo "File not found!"
+
+
+      - name: Debug Firebase Secrets
+        run: |
+          echo "FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}"
+          echo "FIREBASE_TESTER_GROUPS: ${{ secrets.FIREBASE_TESTER_GROUPS }}"
+          echo "Checking Service Account Key..."
+          echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}" | head -c 50
+
+
+
       - name: Deploy to Firebase App Distribution
         uses: wzieba/Firebase-Distribution-Github-Action@v1
         with:
           appId: ${{ secrets.FIREBASE_APP_ID }}
           serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
           groups: ${{ secrets.FIREBASE_TESTER_GROUPS }}
-#          file: deploy_output/app/outputs/apk/release/app-release.apk
-#          file: deploy_output/app/outputs/flutter-apk/app-release.apk
           file: deploy_output/app/outputs/flutter-apk/app-release.apk
           releaseNotes: "Initial release"
           debug: true
