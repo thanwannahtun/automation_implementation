@@ -58,7 +58,7 @@ jobs:
           appId: ${{ secrets.FIREBASE_APP_ID }}
           serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
           groups: ${{ secrets.FIREBASE_TESTER_GROUPS }}
-          file: deploy_output/app-release.apk
+          file: deploy_output/app/outputs/apk/release/app-release.apk
 
       # Optional: Debug Firebase CLI output
       - name: Debug Firebase Output
